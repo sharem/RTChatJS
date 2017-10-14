@@ -1,12 +1,18 @@
 {
-    "name": "RTChat",
-    "version": "0.0.0",
-    "description": "Real time web chat",
-    "dependencies": {
-        "socket.io": "latest",
-        "express": "latest",
-        "jade": "latest",
-        "character-parser": "latest"
-    },
-    "author": "Iraide Diaz Orueta"
+  "name": "RTChat",
+  "version": "0.0.0",
+  "description": "Real time web chat",
+  "dependencies": {
+    "socket.io": "latest",
+    "express": "latest",
+    "jade": "latest",
+    "character-parser": "latest",
+    "snyk": "^1.42.7"
+  },
+  "author": "Iraide Diaz Orueta",
+  "scripts": {
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
+  },
+  "snyk": true
 }
