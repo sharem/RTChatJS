@@ -3,7 +3,6 @@
     "version": "0.0.1",
     "description": "Real time web chat",
     "dependencies": {
-        "character-parser": "latest",
         "express": "latest",
         "pug": "^2.0.0-rc.4",
         "socket.io": "latest"
