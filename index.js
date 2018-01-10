@@ -3,8 +3,8 @@ var app = express();
 var port = 3700;
  
 app.set('views', __dirname + '/tpl');
-app.set('view engine', "jade");
-app.engine('jade', require('jade').__express);
+app.set('view engine', "pug");
+app.engine('pug', require('pug').__express);
 app.get("/", function(req, res){
     res.render("page");
 });

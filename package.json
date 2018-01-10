@@ -1,12 +1,12 @@
 {
     "name": "RTChat",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "Real time web chat",
     "dependencies": {
-        "socket.io": "latest",
+        "character-parser": "latest",
         "express": "latest",
-        "jade": "latest",
-        "character-parser": "latest"
+        "pug": "^2.0.0-rc.4",
+        "socket.io": "latest"
     },
     "author": "Iraide Diaz Orueta"
 }
