@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function useWebRTC() {
   const peerRef = useRef(null);
@@ -46,10 +46,13 @@ export function useWebRTC() {
 
   function endCall() {
     peerRef.current?.close();
+    peerRef.current = null;
     localStream?.getTracks().forEach((t) => t.stop());
     setLocalStream(null);
     setRemoteStream(null);
   }
+
+  useEffect(() => endCall, []);
 
   return { localStream, remoteStream, startCall, answerCall, endCall };
 }

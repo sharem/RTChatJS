@@ -7,18 +7,26 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3700;
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,http://127.0.0.1:5173')
-  .split(',')
-  .map((o) => o.trim());
+const clientUrl = (process.env.CLIENT_URL || '').trim();
+const hasExplicitClientUrl = Object.prototype.hasOwnProperty.call(process.env, 'CLIENT_URL');
+const usePermissiveCors = hasExplicitClientUrl ? clientUrl === '' || clientUrl === '*' : false;
+const allowedOrigins = usePermissiveCors
+  ? null
+  : (clientUrl || 'http://localhost:5173,http://127.0.0.1:5173')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+const expressCorsOrigin = usePermissiveCors ? true : allowedOrigins;
+const socketCorsOrigin = usePermissiveCors ? '*' : allowedOrigins;
 
 app.use(helmet());
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: expressCorsOrigin }));
 app.use(morgan('dev'));
 
 const server = app.listen(port, () => console.log(`Server listening on port ${port}`));
 const io = require('socket.io')(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: socketCorsOrigin,
     methods: ['GET', 'POST'],
   },
 });
@@ -42,6 +50,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send', (data) => {
+    if (!users[socket.id]) return;
     if (!data || typeof data !== 'object' || typeof data.text !== 'string') return;
     const text = data.text.trim().slice(0, 2000);
     if (!text) return;

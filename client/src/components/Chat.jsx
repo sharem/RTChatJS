@@ -22,11 +22,13 @@ export default function Chat() {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on('message', (data) => setMessages((prev) => [...prev, data]));
-    socket.on('users', (list) => setUsers(list));
+    const handleMessage = (data) => setMessages((prev) => [...prev, data]);
+    const handleUsers = (list) => setUsers(list);
+    socket.on('message', handleMessage);
+    socket.on('users', handleUsers);
     return () => {
-      socket.off('message');
-      socket.off('users');
+      socket.off('message', handleMessage);
+      socket.off('users', handleUsers);
     };
   }, [socket]);
 
