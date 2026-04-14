@@ -58,6 +58,7 @@ export default function Chat() {
           <h1 className="text-xl font-semibold text-zinc-800">Join the chat</h1>
           <input
             autoFocus
+            aria-label="Your name"
             className="border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-400"
             placeholder={placeholder}
             value={username}
@@ -103,6 +104,7 @@ export default function Chat() {
         >
           <input
             autoFocus
+            aria-label="Message"
             className="flex-1 bg-zinc-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400 focus:bg-white transition-colors"
             value={input}
             onChange={(e) => setInput(e.target.value)}

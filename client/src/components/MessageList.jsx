@@ -1,30 +1,4 @@
-const USER_COLORS = [
-  'bg-violet-500',
-  'bg-blue-500',
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-pink-500',
-  'bg-cyan-500',
-  'bg-rose-500',
-  'bg-indigo-500',
-];
-
-const colorCache = {};
-let colorIndex = 0;
-
-function colorFor(id) {
-  if (!colorCache[id]) {
-    colorCache[id] = USER_COLORS[colorIndex % USER_COLORS.length];
-    colorIndex++;
-  }
-  return colorCache[id];
-}
-
-function initials(name) {
-  return name
-    ? name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
-    : '?';
-}
+import { colorFor, initials } from '../lib/userColors';
 
 export default function MessageList({ messages, myId, bottomRef }) {
   return (
