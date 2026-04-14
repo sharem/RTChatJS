@@ -3,12 +3,20 @@
     "version": "0.0.1",
     "description": "Real time web chat",
     "scripts": {
-        "start": "node index.js"
+        "start": "node index.js",
+        "dev": "nodemon index.js"
     },
     "dependencies": {
-        "express": "^4.16.2",
-        "pug": "^2.0.0-rc.4",
-        "socket.io": "^2.0.4"
+        "cors": "^2.8.6",
+        "dotenv": "^17.4.2",
+        "express": "^5.2.1",
+        "helmet": "^8.1.0",
+        "morgan": "^1.10.1",
+        "pug": "^3.0.4",
+        "socket.io": "^4.8.3"
     },
-    "author": "Iraide Diaz Orueta"
+    "author": "Iraide Diaz Orueta",
+    "devDependencies": {
+        "nodemon": "^3.1.14"
+    }
 }
