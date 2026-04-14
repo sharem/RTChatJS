@@ -1,22 +1,16 @@
 {
-    "name": "RTChat",
-    "version": "0.0.1",
-    "description": "Real time web chat",
-    "scripts": {
-        "start": "node index.js",
-        "dev": "nodemon index.js"
-    },
-    "dependencies": {
-        "cors": "^2.8.6",
-        "dotenv": "^17.4.2",
-        "express": "^5.2.1",
-        "helmet": "^8.1.0",
-        "morgan": "^1.10.1",
-        "pug": "^3.0.4",
-        "socket.io": "^4.8.3"
-    },
-    "author": "Iraide Diaz Orueta",
-    "devDependencies": {
-        "nodemon": "^3.1.14"
-    }
+  "name": "rtchat",
+  "version": "0.0.1",
+  "description": "RTChat monorepo",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "start": "npm run start --workspace=server"
+  },
+  "author": "Iraide Diaz Orueta"
 }
