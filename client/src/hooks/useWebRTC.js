@@ -9,15 +9,27 @@ export function useWebRTC(socket) {
   useEffect(() => {
     if (!socket) return;
 
-    async function handleAnswer({ answer }) {
+    async function handleAnswer(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const { answer } = payload;
       if (peerRef.current) {
-        await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        try {
+          await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (error) {
+          console.error('Failed to set remote description from answer event:', error);
+        }
       }
     }
 
-    async function handleIceCandidate({ candidate }) {
+    async function handleIceCandidate(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const { candidate } = payload;
       if (peerRef.current && candidate) {
-        await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        try {
+          await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (error) {
+          console.error('Failed to add ICE candidate:', error);
+        }
       }
     }
 

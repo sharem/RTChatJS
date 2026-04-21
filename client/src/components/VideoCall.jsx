@@ -20,15 +20,17 @@ export default function VideoCall({ socket, peerId, incomingCall, onEnd }) {
     }
   }, [remoteStream]);
 
-  // Auto-answer when this component mounts for an incoming call
+  const answeredRef = useRef(false);
+
+  // Auto-answer when an incoming call is present, but only once per call
   useEffect(() => {
-    if (!incomingCall) return;
+    if (!incomingCall || answeredRef.current) return;
+    answeredRef.current = true;
     setCalling(true);
     answerCall(incomingCall.offer, incomingCall.fromId)
       .catch((err) => setCallError(err?.message || 'Could not answer call.'))
       .finally(() => setCalling(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [incomingCall, answerCall]);
 
   async function handleStart() {
     setCallError(null);

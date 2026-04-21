@@ -46,7 +46,7 @@ export default function UserList({ users, myId, onCall }) {
               {!isMe && (
                 <button
                   onClick={() => onCall?.(user.id)}
-                  title={`Call ${user.name}`}
+                  aria-label={`Call ${user.name}`}
                   className="shrink-0 text-zinc-400 hover:text-emerald-400 transition-colors text-xs"
                 >
                   📞
