@@ -7,9 +7,16 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3700;
 
+const isProduction = process.env.NODE_ENV === 'production';
 const clientUrl = (process.env.CLIENT_URL || '').trim();
 const hasExplicitClientUrl = Object.prototype.hasOwnProperty.call(process.env, 'CLIENT_URL');
-const usePermissiveCors = hasExplicitClientUrl ? clientUrl === '' || clientUrl === '*' : false;
+const usePermissiveCors = !isProduction && (hasExplicitClientUrl ? clientUrl === '' || clientUrl === '*' : false);
+
+if (isProduction && (!hasExplicitClientUrl || clientUrl === '' || clientUrl === '*')) {
+  console.error('FATAL: CLIENT_URL must be set to an explicit origin allow-list in production.');
+  process.exit(1);
+}
+
 const allowedOrigins = usePermissiveCors
   ? null
   : (clientUrl || 'http://localhost:5173,http://127.0.0.1:5173')
@@ -69,5 +76,17 @@ io.on('connection', (socket) => {
       io.emit('users', Object.entries(users).map(([id, name]) => ({ id, name })));
       io.emit('message', { type: 'system', text: `${name} left the chat` });
     }
+  });
+
+  socket.on('offer', ({ to, offer }) => {
+    io.to(to).emit('offer', { offer, from: socket.id });
+  });
+
+  socket.on('answer', ({ to, answer }) => {
+    io.to(to).emit('answer', { answer, from: socket.id });
+  });
+
+  socket.on('ice-candidate', ({ to, candidate }) => {
+    io.to(to).emit('ice-candidate', { candidate, from: socket.id });
   });
 });

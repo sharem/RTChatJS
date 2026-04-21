@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import MessageList from './MessageList';
 import UserList from './UserList';
+import VideoCall from './VideoCall';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3700';
 
@@ -18,18 +19,40 @@ export default function Chat() {
   const [placeholder] = useState(randomName);
   const [username, setUsername] = useState('');
   const [joined, setJoined] = useState(false);
+  const [callPeerId, setCallPeerId] = useState(null);
+  const [incomingCall, setIncomingCall] = useState(null);
   const bottomRef = useRef(null);
+  const joinedRef = useRef(false);
+  const effectiveNameRef = useRef('');
 
   useEffect(() => {
     if (!socket) return;
     const handleMessage = (data) => setMessages((prev) => [...prev, data]);
     const handleUsers = (list) => setUsers(list);
+    const handleOffer = ({ offer, from }) => {
+      setIncomingCall({ offer, fromId: from });
+      setCallPeerId(from);
+    };
     socket.on('message', handleMessage);
     socket.on('users', handleUsers);
+    socket.on('offer', handleOffer);
     return () => {
       socket.off('message', handleMessage);
       socket.off('users', handleUsers);
+      socket.off('offer', handleOffer);
     };
+  }, [socket]);
+
+  // Re-emit join after reconnect so the server re-registers this socket
+  useEffect(() => {
+    if (!socket) return;
+    function handleReconnect() {
+      if (joinedRef.current) {
+        socket.emit('join', effectiveNameRef.current);
+      }
+    }
+    socket.on('connect', handleReconnect);
+    return () => socket.off('connect', handleReconnect);
   }, [socket]);
 
   useEffect(() => {
@@ -39,7 +62,10 @@ export default function Chat() {
   function join(e) {
     e.preventDefault();
     if (!socket) return;
-    socket.emit('join', username.trim() || placeholder);
+    const name = username.trim() || placeholder;
+    effectiveNameRef.current = name;
+    joinedRef.current = true;
+    socket.emit('join', name);
     setJoined(true);
   }
 
@@ -79,7 +105,7 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen bg-zinc-100 font-sans">
-      <UserList users={users} myId={socket?.id} />
+      <UserList users={users} myId={socket?.id} onCall={(id) => { setCallPeerId(id); setIncomingCall(null); }} />
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
         <header className="flex items-center justify-between px-5 py-3 bg-white border-b border-zinc-200 shadow-sm shrink-0">
@@ -96,6 +122,15 @@ export default function Chat() {
             {connected ? 'Connected' : 'Disconnected'}
           </span>
         </header>
+
+        {callPeerId && socket && (
+          <VideoCall
+            socket={socket}
+            peerId={callPeerId}
+            incomingCall={incomingCall}
+            onEnd={() => { setCallPeerId(null); setIncomingCall(null); }}
+          />
+        )}
 
         <MessageList messages={messages} myId={socket?.id} bottomRef={bottomRef} />
 

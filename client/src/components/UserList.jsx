@@ -1,6 +1,6 @@
 import { colorFor, initials } from '../lib/userColors';
 
-export default function UserList({ users, myId }) {
+export default function UserList({ users, myId, onCall }) {
   return (
     <aside className="w-60 bg-zinc-900 flex flex-col shrink-0">
       {/* Sidebar header */}
@@ -33,7 +33,7 @@ export default function UserList({ users, myId }) {
                 {initials(user.name)}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-zinc-900 rounded-full" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className={`text-sm truncate leading-tight ${
                   isMe ? 'text-white font-semibold' : 'text-zinc-300'
                 }`}>
@@ -43,6 +43,15 @@ export default function UserList({ users, myId }) {
                   <p className="text-[10px] text-zinc-500 leading-tight">You</p>
                 )}
               </div>
+              {!isMe && (
+                <button
+                  onClick={() => onCall?.(user.id)}
+                  title={`Call ${user.name}`}
+                  className="shrink-0 text-zinc-400 hover:text-emerald-400 transition-colors text-xs"
+                >
+                  📞
+                </button>
+              )}
             </li>
           );
         })}
