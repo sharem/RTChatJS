@@ -7,24 +7,13 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3700;
 
-const isProduction = process.env.NODE_ENV === 'production';
 const clientUrl = (process.env.CLIENT_URL || '').trim();
-const hasExplicitClientUrl = Object.prototype.hasOwnProperty.call(process.env, 'CLIENT_URL');
-const usePermissiveCors = !isProduction && (hasExplicitClientUrl ? clientUrl === '' || clientUrl === '*' : false);
-
-if (isProduction && (!hasExplicitClientUrl || clientUrl === '' || clientUrl === '*')) {
-  console.error('FATAL: CLIENT_URL must be set to an explicit origin allow-list in production.');
-  process.exit(1);
-}
-
-const allowedOrigins = usePermissiveCors
-  ? null
-  : (clientUrl || 'http://localhost:5173,http://127.0.0.1:5173')
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean);
-const expressCorsOrigin = usePermissiveCors ? true : allowedOrigins;
-const socketCorsOrigin = usePermissiveCors ? '*' : allowedOrigins;
+const allowedOrigins = (clientUrl || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+const expressCorsOrigin = allowedOrigins;
+const socketCorsOrigin = allowedOrigins;
 
 app.use(helmet());
 app.use(cors({ origin: expressCorsOrigin }));
