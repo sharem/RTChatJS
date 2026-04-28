@@ -25,20 +25,29 @@ const io = require('socket.io')(server, {
 
 const users = {};
 
+function normalizeName(name) {
+  const normalized = (typeof name === 'string' ? name : String(name ?? '')).trim().slice(0, 50);
+  return normalized || 'Anonymous';
+}
+
 io.on('connection', (socket) => {
   socket.on('join', (name) => {
-    users[socket.id] = name;
+    const safeName = normalizeName(name);
+    users[socket.id] = safeName;
     io.emit('users', Object.entries(users).map(([id, name]) => ({ id, name })));
     io.emit('message', {
       type: 'system',
-      text: `${name} joined the chat`,
+      text: `${safeName} joined the chat`,
     });
   });
 
   socket.on('send', (data) => {
+    if (!data || typeof data !== 'object' || typeof data.text !== 'string') return;
+    const text = data.text.trim().slice(0, 2000);
+    if (!text) return;
     io.emit('message', {
       type: 'chat',
-      text: data.text,
+      text,
       from: socket.id,
       name: users[socket.id] || 'Unknown',
     });

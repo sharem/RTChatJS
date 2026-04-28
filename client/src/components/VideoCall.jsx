@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useWebRTC } from '../hooks/useWebRTC';
 
 export default function VideoCall({ socket, peerId }) {
@@ -6,15 +6,20 @@ export default function VideoCall({ socket, peerId }) {
   const remoteVideoRef = useRef(null);
   const { localStream, remoteStream, startCall, endCall } = useWebRTC();
 
-  function handleStart() {
-    startCall(socket, peerId);
+  useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
-  }
+  }, [localStream]);
 
-  if (remoteStream && remoteVideoRef.current) {
-    remoteVideoRef.current.srcObject = remoteStream;
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  function handleStart() {
+    startCall(socket, peerId);
   }
 
   return (
