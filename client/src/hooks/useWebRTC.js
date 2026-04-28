@@ -1,12 +1,50 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export function useWebRTC() {
+export function useWebRTC(socket) {
   const peerRef = useRef(null);
+  const localStreamRef = useRef(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
 
-  async function startCall(socket, targetId) {
+  useEffect(() => {
+    if (!socket) return;
+
+    async function handleAnswer(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const { answer } = payload;
+      if (peerRef.current) {
+        try {
+          await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (error) {
+          console.error('Failed to set remote description from answer event:', error);
+        }
+      }
+    }
+
+    async function handleIceCandidate(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const { candidate } = payload;
+      if (peerRef.current && candidate) {
+        try {
+          await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (error) {
+          console.error('Failed to add ICE candidate:', error);
+        }
+      }
+    }
+
+    socket.on('answer', handleAnswer);
+    socket.on('ice-candidate', handleIceCandidate);
+
+    return () => {
+      socket.off('answer', handleAnswer);
+      socket.off('ice-candidate', handleIceCandidate);
+    };
+  }, [socket]);
+
+  async function startCall(targetId) {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStreamRef.current = stream;
     setLocalStream(stream);
 
     peerRef.current = new RTCPeerConnection();
@@ -24,8 +62,9 @@ export function useWebRTC() {
     socket.emit('offer', { to: targetId, offer });
   }
 
-  async function answerCall(socket, offer, fromId) {
+  async function answerCall(offer, fromId) {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStreamRef.current = stream;
     setLocalStream(stream);
 
     peerRef.current = new RTCPeerConnection();
@@ -46,10 +85,17 @@ export function useWebRTC() {
 
   function endCall() {
     peerRef.current?.close();
-    localStream?.getTracks().forEach((t) => t.stop());
+    peerRef.current = null;
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    localStreamRef.current = null;
     setLocalStream(null);
     setRemoteStream(null);
   }
+
+  useEffect(() => () => {
+    peerRef.current?.close();
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+  }, []);
 
   return { localStream, remoteStream, startCall, answerCall, endCall };
 }
