@@ -7,18 +7,22 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3700;
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,http://127.0.0.1:5173')
+const clientUrl = (process.env.CLIENT_URL || '').trim();
+const allowedOrigins = (clientUrl || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
-  .map((o) => o.trim());
+  .map((o) => o.trim())
+  .filter(Boolean);
+const expressCorsOrigin = allowedOrigins;
+const socketCorsOrigin = allowedOrigins;
 
 app.use(helmet());
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: expressCorsOrigin }));
 app.use(morgan('dev'));
 
 const server = app.listen(port, () => console.log(`Server listening on port ${port}`));
 const io = require('socket.io')(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: socketCorsOrigin,
     methods: ['GET', 'POST'],
   },
 });
@@ -42,6 +46,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send', (data) => {
+    if (!users[socket.id]) return;
     if (!data || typeof data !== 'object' || typeof data.text !== 'string') return;
     const text = data.text.trim().slice(0, 2000);
     if (!text) return;
@@ -60,5 +65,17 @@ io.on('connection', (socket) => {
       io.emit('users', Object.entries(users).map(([id, name]) => ({ id, name })));
       io.emit('message', { type: 'system', text: `${name} left the chat` });
     }
+  });
+
+  socket.on('offer', ({ to, offer }) => {
+    io.to(to).emit('offer', { offer, from: socket.id });
+  });
+
+  socket.on('answer', ({ to, answer }) => {
+    io.to(to).emit('answer', { answer, from: socket.id });
+  });
+
+  socket.on('ice-candidate', ({ to, candidate }) => {
+    io.to(to).emit('ice-candidate', { candidate, from: socket.id });
   });
 });

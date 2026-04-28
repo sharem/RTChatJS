@@ -1,10 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useWebRTC } from '../hooks/useWebRTC';
 
-export default function VideoCall({ socket, peerId }) {
+export default function VideoCall({ socket, peerId, incomingCall, onEnd }) {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const { localStream, remoteStream, startCall, endCall } = useWebRTC();
+  const { localStream, remoteStream, startCall, answerCall, endCall } = useWebRTC(socket);
+  const [callError, setCallError] = useState(null);
+  const [calling, setCalling] = useState(false);
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -18,8 +20,33 @@ export default function VideoCall({ socket, peerId }) {
     }
   }, [remoteStream]);
 
-  function handleStart() {
-    startCall(socket, peerId);
+  const answeredRef = useRef(false);
+
+  // Auto-answer when an incoming call is present, but only once per call
+  useEffect(() => {
+    if (!incomingCall || answeredRef.current) return;
+    answeredRef.current = true;
+    setCalling(true);
+    answerCall(incomingCall.offer, incomingCall.fromId)
+      .catch((err) => setCallError(err?.message || 'Could not answer call.'))
+      .finally(() => setCalling(false));
+  }, [incomingCall, answerCall]);
+
+  async function handleStart() {
+    setCallError(null);
+    setCalling(true);
+    try {
+      await startCall(peerId);
+    } catch (err) {
+      setCallError(err?.message || 'Could not start call.');
+    } finally {
+      setCalling(false);
+    }
+  }
+
+  function handleEnd() {
+    endCall();
+    onEnd?.();
   }
 
   return (
@@ -28,11 +55,23 @@ export default function VideoCall({ socket, peerId }) {
         <video ref={localVideoRef} autoPlay muted className="w-1/2 rounded border" />
         <video ref={remoteVideoRef} autoPlay className="w-1/2 rounded border" />
       </div>
+      {callError && (
+        <p className="text-sm text-red-500">{callError}</p>
+      )}
       <div className="flex gap-2">
-        <button onClick={handleStart} className="px-4 py-2 bg-primary text-primary-foreground rounded">
-          Start Call
-        </button>
-        <button onClick={endCall} className="px-4 py-2 bg-destructive text-destructive-foreground rounded">
+        {!incomingCall && (
+          <button
+            onClick={handleStart}
+            disabled={!socket || !peerId || calling}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded disabled:opacity-50"
+          >
+            {calling ? 'Starting…' : 'Start Call'}
+          </button>
+        )}
+        {incomingCall && calling && (
+          <span className="px-4 py-2 text-sm text-zinc-500">Connecting…</span>
+        )}
+        <button onClick={handleEnd} className="px-4 py-2 bg-destructive text-destructive-foreground rounded">
           End Call
         </button>
       </div>
