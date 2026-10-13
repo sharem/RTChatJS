@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Covers both workspaces (server, client) through the root package-lock.json
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Security updates only: disable routine version-bump PRs
+    open-pull-requests-limit: 0
+    groups:
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "deps"
